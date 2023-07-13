@@ -1,4 +1,3 @@
-/*
 import express, {Request, Response, Router} from "express";
 import cors from "cors";
 import Controller from "./controller"
@@ -6,7 +5,7 @@ import serverless from 'serverless-http';
 
 const controller = new Controller()
 
-//const port = process.env.PORT || 5000
+const port = process.env.PORT || 5000
 
 const app = express();
 
@@ -42,22 +41,10 @@ router.post("/logout", async (req:Request, res:Response) => {
     await controller.tryLogout(req, res);
 
 })
-
+/*
 app.listen(port, () => {
     console.log(`Start server on port ${port}.`);
 });
-
+*/
 
 export const handler = serverless(app);
-*/
-import express, { Router } from 'express';
-import serverless from 'serverless-http';
-
-const api = express();
-
-const router = Router();
-router.get('/hello', (req, res) => res.send('Hello World!'));
-
-api.use('/api/', router);
-
-export const handler = serverless(api);
