@@ -28038,6 +28038,990 @@ function createRedirectDirectoryListener () {
 
 /***/ }),
 
+/***/ 8617:
+/***/ ((module) => {
+
+"use strict";
+
+
+module.exports = async function finish(item, transform, ...details) {
+  await new Promise((resolve, reject) => {
+    if (item.finished || item.complete) {
+      resolve();
+      return;
+    }
+
+    let finished = false;
+
+    function done(err) {
+      if (finished) {
+        return;
+      }
+
+      finished = true;
+
+      item.removeListener('error', done);
+      item.removeListener('end', done);
+      item.removeListener('finish', done);
+
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    }
+
+    item.once('error', done);
+    item.once('end', done);
+    item.once('finish', done);
+  });
+
+  if (typeof transform === 'function') {
+    await transform(item, ...details);
+  } else if (typeof transform === 'object' && transform !== null) {
+    Object.assign(item, transform);
+  }
+
+  return item;
+};
+
+
+/***/ }),
+
+/***/ 3455:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+const http = __webpack_require__(3685)
+const Response = __webpack_require__(9949);
+
+function common(cb) {
+  return request => {
+    const response = new Response(request);
+
+    cb(request, response);
+
+    return response;
+  };
+}
+
+module.exports = function getFramework(app) {
+  if (app instanceof http.Server) {
+    return request => {
+      const response = new Response(request);
+      app.emit('request', request, response)
+      return response
+    }
+  }
+
+  if (typeof app.callback === 'function') {
+    return common(app.callback());
+  }
+
+  if (typeof app.handle === 'function') {
+    return common((request, response) => {
+      app.handle(request, response);
+    });
+  }
+
+  if (typeof app.handler === 'function') {
+    return common((request, response) => {
+      app.handler(request, response);
+    });
+  }
+
+  if (typeof app._onRequest === 'function') {
+    return common((request, response) => {
+      app._onRequest(request, response);
+    });
+  }
+
+  if (typeof app === 'function') {
+    return common(app);
+  }
+
+  if (app.router && typeof app.router.route == 'function') {
+    return common((req, res) => {
+      const { url, method, headers, body } = req;
+      app.router.route({ url, method, headers, body }, res);
+    });
+  }
+
+  if (app._core && typeof app._core._dispatch === 'function') {
+    return common(app._core._dispatch({
+      app
+    }));
+  }
+
+  if (typeof app.inject === 'function') {
+    return async request => {
+      const { method, url, headers, body } = request;
+
+      const res = await app.inject({ method, url, headers, payload: body })
+
+      return Response.from(res);
+    };
+  }
+
+  if (typeof app.main === 'function') {
+    return common(app.main);
+  }
+
+  throw new Error('Unsupported framework');
+};
+
+
+/***/ }),
+
+/***/ 4949:
+/***/ ((module) => {
+
+"use strict";
+
+
+function removeBasePath(path = '/', basePath) {
+  if (basePath) {
+    const basePathIndex = path.indexOf(basePath);
+
+    if (basePathIndex > -1) {
+      return path.substr(basePathIndex + basePath.length) || '/';
+    }
+  }
+
+  return path;
+}
+
+function isString(value)
+{
+  return (typeof value === 'string' || value instanceof String);
+}
+
+// ELBs will pass spaces as + symbols, and decodeURIComponent doesn't decode + symbols. So we need to convert them into something it can convert
+function specialDecodeURIComponent(value)
+{
+  if(!isString(value))
+  {
+    return value;
+  }
+
+  let decoded;
+  try {
+    decoded = decodeURIComponent(value.replace(/[+]/g, "%20"));
+  } catch (err) {
+    decoded = value.replace(/[+]/g, "%20");
+  }
+
+  return decoded;
+}
+
+function recursiveURLDecode(value) {
+
+  if (isString(value)) {
+    return specialDecodeURIComponent(value);
+  } else if (Array.isArray(value)) {
+
+    const decodedArray = [];
+
+    for (let index in value) {
+      decodedArray.push(recursiveURLDecode(value[index]));
+    }
+
+    return decodedArray;
+
+  } else if (value instanceof Object) {
+
+    const decodedObject = {};
+
+    for (let key of Object.keys(value)) {
+      decodedObject[specialDecodeURIComponent(key)] = recursiveURLDecode(value[key]);
+    }
+
+    return decodedObject;
+  }
+
+  return value;
+}
+
+module.exports = function cleanupEvent(evt, options) {
+  const event = evt || {};
+
+  event.requestContext = event.requestContext || {};
+  event.body = event.body || '';
+  event.headers = event.headers || {};
+
+  // Events coming from AWS Elastic Load Balancers do not automatically urldecode query parameters (unlike API Gateway). So we need to check for that and automatically decode them
+  // to normalize the request between the two.
+  if ('elb' in event.requestContext) {
+
+    if (event.multiValueQueryStringParameters) {
+      event.multiValueQueryStringParameters = recursiveURLDecode(event.multiValueQueryStringParameters);
+    }
+
+    if (event.queryStringParameters) {
+      event.queryStringParameters = recursiveURLDecode(event.queryStringParameters);
+    }
+
+  }
+
+  if (event.version === '2.0') {
+    event.requestContext.authorizer = event.requestContext.authorizer || {};
+    event.requestContext.http.method = event.requestContext.http.method || 'GET';
+    event.rawPath = removeBasePath(event.requestPath || event.rawPath, options.basePath);
+  } else {
+    event.requestContext.identity = event.requestContext.identity || {};
+    event.httpMethod = event.httpMethod || 'GET';
+    event.path = removeBasePath(event.requestPath || event.path, options.basePath);
+  }
+
+  return event;
+};
+
+
+/***/ }),
+
+/***/ 9116:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+const URL = __webpack_require__(7310);
+
+const Request = __webpack_require__(2586);
+
+function requestMethod(event) {
+  if (event.version === '2.0') {
+    return event.requestContext.http.method;
+  }
+  return event.httpMethod;
+}
+
+function requestRemoteAddress(event) {
+  if (event.version === '2.0') {
+    return event.requestContext.http.sourceIp;
+  }
+  return event.requestContext.identity.sourceIp;
+}
+
+function requestHeaders(event) {
+  const initialHeader =
+    event.version === '2.0' && Array.isArray(event.cookies)
+      ? { cookie: event.cookies.join('; ') }
+      : {};
+
+  if (event.multiValueHeaders) {
+    Object.keys(event.multiValueHeaders).reduce((headers, key) => {
+      headers[key.toLowerCase()] = event.multiValueHeaders[key].join(', ');
+      return headers;
+    }, initialHeader);
+  }
+
+  return Object.keys(event.headers).reduce((headers, key) => {
+    headers[key.toLowerCase()] = event.headers[key];
+    return headers;
+  }, initialHeader);
+}
+
+function requestBody(event) {
+  const type = typeof event.body;
+
+  if (Buffer.isBuffer(event.body)) {
+    return event.body;
+  } else if (type === 'string') {
+    return Buffer.from(event.body, event.isBase64Encoded ? 'base64' : 'utf8');
+  } else if (type === 'object') {
+    return Buffer.from(JSON.stringify(event.body));
+  }
+
+  throw new Error(`Unexpected event.body type: ${typeof event.body}`);
+}
+
+function requestUrl(event) {
+  if (event.version === '2.0') {
+    return URL.format({
+      pathname: event.rawPath,
+      search: event.rawQueryString,
+    });
+  }
+  // Normalize all query params into a single query string.
+  const query = event.multiValueQueryStringParameters || {};
+  if (event.queryStringParameters) {
+    Object.keys(event.queryStringParameters).forEach((key) => {
+      if (Array.isArray(query[key])) {
+        if (!query[key].includes(event.queryStringParameters[key])) {
+          query[key].push(event.queryStringParameters[key]);
+        }
+      } else {
+        query[key] = [event.queryStringParameters[key]];
+      }
+    });
+  }
+  return URL.format({
+    pathname: event.path,
+    query: query,
+  });
+}
+
+module.exports = (event, context, options) => {
+  const method = requestMethod(event);
+  const remoteAddress = requestRemoteAddress(event);
+  const headers = requestHeaders(event);
+  const body = requestBody(event);
+  const url = requestUrl(event);
+
+  if (typeof options.requestId === 'string' && options.requestId.length > 0) {
+    const header = options.requestId.toLowerCase();
+    const requestId = headers[header] || event.requestContext.requestId;
+    if (requestId) {
+      headers[header] = requestId;
+    }
+  }
+
+  const req = new Request({
+    method,
+    headers,
+    body,
+    remoteAddress,
+    url,
+  });
+
+  req.requestContext = event.requestContext;
+  req.apiGateway = {
+    event,
+    context,
+  };
+
+  return req;
+};
+
+
+/***/ }),
+
+/***/ 5134:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+const isBinary = __webpack_require__(2038);
+const Response = __webpack_require__(9949);
+const sanitizeHeaders = __webpack_require__(1762);
+
+module.exports = (event, response, options) => {
+  const { statusCode } = response;
+  const {headers, multiValueHeaders } = sanitizeHeaders(Response.headers(response));
+
+  let cookies = [];
+
+  if (multiValueHeaders['set-cookie']) {
+    cookies = multiValueHeaders['set-cookie'];
+  }
+
+  const isBase64Encoded = isBinary(headers, options);
+  const encoding = isBase64Encoded ? 'base64' : 'utf8';
+  let body = Response.body(response).toString(encoding);
+
+  if (headers['transfer-encoding'] === 'chunked' || response.chunkedEncoding) {
+    const raw = Response.body(response).toString().split('\r\n');
+    const parsed = [];
+    for (let i = 0; i < raw.length; i +=2) {
+      const size = parseInt(raw[i], 16);
+      const value = raw[i + 1];
+      if (value) {
+        parsed.push(value.substring(0, size));
+      }
+    }
+    body = parsed.join('')
+  }
+
+  let formattedResponse = { statusCode, headers, isBase64Encoded, body };
+
+  if (event.version === '2.0' && cookies.length) {
+    formattedResponse['cookies'] = cookies;
+  }
+
+  if ((!event.version || event.version === '1.0') && Object.keys(multiValueHeaders).length) {
+    formattedResponse['multiValueHeaders'] = multiValueHeaders;
+  }
+
+  return formattedResponse;
+};
+
+
+/***/ }),
+
+/***/ 8061:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const cleanUpEvent = __webpack_require__(4949);
+
+const createRequest = __webpack_require__(9116);
+const formatResponse = __webpack_require__(5134);
+
+module.exports = options => {
+  return getResponse => async (event_, context = {}) => {
+    const event = cleanUpEvent(event_, options);
+
+    const request = createRequest(event, context, options);
+    const response = await getResponse(request, event, context);
+
+    return formatResponse(event, response, options);
+  };
+};
+
+
+/***/ }),
+
+/***/ 2038:
+/***/ ((module) => {
+
+"use strict";
+
+
+const BINARY_ENCODINGS = ['gzip', 'deflate', 'br'];
+const BINARY_CONTENT_TYPES = (process.env.BINARY_CONTENT_TYPES || '').split(',');
+
+function isBinaryEncoding(headers) {
+  const contentEncoding = headers['content-encoding'];
+
+  if (typeof contentEncoding === 'string') {
+    return contentEncoding.split(',').some(value =>
+      BINARY_ENCODINGS.some(binaryEncoding => value.indexOf(binaryEncoding) !== -1)
+    );
+  }
+}
+
+function isBinaryContent(headers, options) {
+  const contentTypes = [].concat(options.binary
+    ? options.binary
+    : BINARY_CONTENT_TYPES
+  ).map(candidate =>
+    new RegExp(`^${candidate.replace(/\*/g, '.*')}$`)
+  );
+
+  const contentType = (headers['content-type'] || '').split(';')[0];
+  return !!contentType && contentTypes.some(candidate => candidate.test(contentType));
+}
+
+module.exports = function isBinary(headers, options) {
+  if (options.binary === false) {
+    return false;
+  }
+
+  if (options.binary === true) {
+    return true
+  }
+
+  if (typeof options.binary === 'function') {
+    return options.binary(headers);
+  }
+
+  return isBinaryEncoding(headers) || isBinaryContent(headers, options);
+};
+
+
+/***/ }),
+
+/***/ 1762:
+/***/ ((module) => {
+
+"use strict";
+
+
+module.exports = function sanitizeHeaders(headers) {
+  return Object.keys(headers).reduce((memo, key) => {
+      const value = headers[key];
+
+    if (Array.isArray(value)) {
+      memo.multiValueHeaders[key] = value;
+      if (key.toLowerCase() !== 'set-cookie') {
+        memo.headers[key] = value.join(", ");
+      }
+      } else {
+        memo.headers[key] = value == null ? '' : value.toString();
+      }
+
+      return memo;
+  }, {
+      headers: {},
+      multiValueHeaders: {}
+    });
+};
+
+
+/***/ }),
+
+/***/ 5989:
+/***/ ((module) => {
+
+"use strict";
+
+
+function getUrl({ requestPath, url }) {
+    if (requestPath) {
+        return requestPath;
+    }
+
+    return typeof url === 'string' ? url : '/';
+}
+
+function getRequestContext(request) {
+    const requestContext = {};
+    requestContext.identity = {};
+    const forwardedIp = request.headers['x-forwarded-for'];
+    const clientIp = request.headers['client-ip'];
+    const ip = forwardedIp ? forwardedIp : (clientIp ? clientIp : '');
+    if (ip) {
+        requestContext.identity.sourceIp = ip.split(':')[0];
+    }
+    return requestContext;
+}
+
+module.exports = function cleanupRequest(req, options) {
+    const request = req || {};
+
+    request.requestContext = getRequestContext(req);
+    request.method = request.method || 'GET';
+    request.url = getUrl(request);
+    request.body = request.body || '';
+    request.headers = request.headers || {};
+
+    if (options.basePath) {
+        const basePathIndex = request.url.indexOf(options.basePath);
+
+        if (basePathIndex > -1) {
+            request.url = request.url.substr(basePathIndex + options.basePath.length);
+        }
+    }
+
+    return request;
+}
+
+/***/ }),
+
+/***/ 3919:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+const url = __webpack_require__(7310);
+
+const Request = __webpack_require__(2586);
+
+function requestHeaders(request) {
+    return Object.keys(request.headers).reduce((headers, key) => {
+        headers[key.toLowerCase()] = request.headers[key];
+        return headers;
+    }, {});
+}
+
+function requestBody(request) {
+    const type = typeof request.rawBody;
+
+    if (Buffer.isBuffer(request.rawBody)) {
+        return request.rawBody;
+    } else if (type === 'string') {
+        return Buffer.from(request.rawBody, 'utf8');
+    } else if (type === 'object') {
+        return Buffer.from(JSON.stringify(request.rawBody));
+    }
+
+    throw new Error(`Unexpected request.body type: ${typeof request.rawBody}`);
+}
+
+module.exports = (request) => {
+    const method = request.method;
+    const query = request.query;
+    const headers = requestHeaders(request);
+    const body = requestBody(request);
+
+    const req = new Request({
+        method,
+        headers,
+        body,
+        url: url.format({
+            pathname: request.url,
+            query
+        })
+    });
+    req.requestContext = request.requestContext;
+    return req;
+}
+
+
+/***/ }),
+
+/***/ 3829:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const isBinary = __webpack_require__(474);
+const Response = __webpack_require__(9949);
+const sanitizeHeaders = __webpack_require__(1962);
+
+module.exports = (response, options) => {
+    const { statusCode } = response;
+    const headers = sanitizeHeaders(Response.headers(response));
+
+    if (headers['transfer-encoding'] === 'chunked' || response.chunkedEncoding) {
+        throw new Error('chunked encoding not supported');
+    }
+
+    const isBase64Encoded = isBinary(headers, options);
+    const encoding = isBase64Encoded ? 'base64' : 'utf8';
+    const body = Response.body(response).toString(encoding);
+
+    return { status: statusCode, headers, isBase64Encoded, body };
+}
+
+/***/ }),
+
+/***/ 3358:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const cleanupRequest = __webpack_require__(5989);
+const createRequest = __webpack_require__(3919);
+const formatResponse = __webpack_require__(3829);
+
+module.exports = options => {
+    return getResponse => async (context, req) => {
+        const event = cleanupRequest(req, options);
+        const request = createRequest(event, options);
+        const response = await getResponse(request, context, event);
+        context.log(response);
+        return formatResponse(response, options);
+    }
+};
+
+/***/ }),
+
+/***/ 474:
+/***/ ((module) => {
+
+"use strict";
+
+
+const BINARY_ENCODINGS = ['gzip', 'deflate', 'br'];
+const BINARY_CONTENT_TYPES = (process.env.BINARY_CONTENT_TYPES || '').split(',');
+
+function isBinaryEncoding(headers) {
+  const contentEncoding = headers['content-encoding'];
+
+  if (typeof contentEncoding === 'string') {
+    return contentEncoding.split(',').some(value =>
+      BINARY_ENCODINGS.some(binaryEncoding => value.indexOf(binaryEncoding) !== -1)
+    );
+  }
+}
+
+function isBinaryContent(headers, options) {
+  const contentTypes = [].concat(options.binary
+    ? options.binary
+    : BINARY_CONTENT_TYPES
+  ).map(candidate =>
+    new RegExp(`^${candidate.replace(/\*/g, '.*')}$`)
+  );
+
+  const contentType = (headers['content-type'] || '').split(';')[0];
+  return !!contentType && contentTypes.some(candidate => candidate.test(contentType));
+}
+
+module.exports = function isBinary(headers, options) {
+  if (options.binary === false) {
+    return false;
+  }
+
+  if (options.binary === true) {
+    return true
+  }
+
+  if (typeof options.binary === 'function') {
+    return options.binary(headers);
+  }
+
+  return isBinaryEncoding(headers) || isBinaryContent(headers, options);
+};
+
+
+/***/ }),
+
+/***/ 1962:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+const setCookieVariations = (__webpack_require__(231)/* .variations */ .i);
+
+module.exports = function sanitizeHeaders(headers) {
+  return Object.keys(headers).reduce((memo, key) => {
+      const value = headers[key];
+
+      if (Array.isArray(value)) {
+        if (key.toLowerCase() === 'set-cookie') {
+          value.forEach((cookie, i) => {
+            memo[setCookieVariations[i]] = cookie;
+          });
+        } else {
+          memo[key] = value.join(', ');
+        }
+      } else {
+        memo[key] = value == null ? '' : value.toString();
+      }
+
+      return memo;
+    }, {});
+};
+
+
+/***/ }),
+
+/***/ 4695:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const aws = __webpack_require__(8061);
+const azure = __webpack_require__(3358);
+
+const providers = {
+  aws,
+  azure
+};
+
+module.exports = function getProvider(options) {
+  const { provider = 'aws' } = options;
+
+  if (provider in providers) {
+    return providers[provider](options);
+  }
+
+  throw new Error(`Unsupported provider ${provider}`);
+};
+
+
+/***/ }),
+
+/***/ 2586:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+const http = __webpack_require__(3685);
+
+module.exports = class ServerlessRequest extends http.IncomingMessage {
+  constructor({ method, url, headers, body, remoteAddress }) {
+    super({
+      encrypted: true,
+      readable: false,
+      remoteAddress,
+      address: () => ({ port: 443 }),
+      end: Function.prototype,
+      destroy: Function.prototype
+    });
+
+    if (typeof headers['content-length'] === 'undefined') {
+      headers['content-length'] = Buffer.byteLength(body);
+    }
+
+    Object.assign(this, {
+      ip: remoteAddress,
+      complete: true,
+      httpVersion: '1.1',
+      httpVersionMajor: '1',
+      httpVersionMinor: '1',
+      method,
+      headers,
+      body,
+      url,
+    });
+
+    this._read = () => {
+      this.push(body);
+      this.push(null);
+    };
+  }
+
+}
+
+
+/***/ }),
+
+/***/ 9949:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+const http = __webpack_require__(3685);
+
+const headerEnd = '\r\n\r\n';
+
+const BODY = Symbol();
+const HEADERS = Symbol();
+
+function getString(data) {
+  if (Buffer.isBuffer(data)) {
+    return data.toString('utf8');
+  } else if (typeof data === 'string') {
+    return data;
+  } else {
+    throw new Error(`response.write() of unexpected type: ${typeof data}`);
+  }
+}
+
+function addData(stream, data) {
+  if (Buffer.isBuffer(data) || typeof data === 'string' || data instanceof Uint8Array) {
+    stream[BODY].push(Buffer.from(data));
+  } else {
+    throw new Error(`response.write() of unexpected type: ${typeof data}`);
+  }
+}
+
+module.exports = class ServerlessResponse extends http.ServerResponse {
+
+  static from(res) {
+    const response = new ServerlessResponse(res);
+
+    response.statusCode = res.statusCode
+    response[HEADERS] = res.headers;
+    response[BODY] = [Buffer.from(res.body)];
+    response.end();
+
+    return response;
+  }
+
+  static body(res) {
+    return Buffer.concat(res[BODY]);
+  }
+
+  static headers(res) {
+    const headers = typeof res.getHeaders === 'function'
+      ? res.getHeaders()
+      : res._headers;
+
+    return Object.assign(headers, res[HEADERS]);
+  }
+
+  get headers() {
+    return this[HEADERS];
+  }
+
+  setHeader(key, value) {
+    if (this._wroteHeader) {
+      this[HEADERS][key] = value;
+    } else {
+      super.setHeader(key, value);
+    }
+  }
+
+  writeHead(statusCode, reason, obj) {
+    const headers = typeof reason === 'string'
+      ? obj
+      : reason
+
+    for (const name in headers) {
+      this.setHeader(name, headers[name])
+
+      if (!this._wroteHeader) {
+        // we only need to initiate super.headers once
+        // writeHead will add the other headers itself
+        break
+      }
+    }
+
+    super.writeHead(statusCode, reason, obj);
+  }
+
+  constructor({ method }) {
+    super({ method });
+
+    this[BODY] = [];
+    this[HEADERS] = {};
+
+    this.useChunkedEncodingByDefault = false;
+    this.chunkedEncoding = false;
+    this._header = '';
+
+    this.assignSocket({
+      _writableState: {},
+      writable: true,
+      on: Function.prototype,
+      removeListener: Function.prototype,
+      destroy: Function.prototype,
+      cork: Function.prototype,
+      uncork: Function.prototype,
+      write: (data, encoding, cb) => {
+        if (typeof encoding === 'function') {
+          cb = encoding;
+          encoding = null;
+        }
+
+        if (this._header === '' || this._wroteHeader) {
+          addData(this, data);
+        } else {
+          const string = getString(data);
+          const index = string.indexOf(headerEnd);
+
+          if (index !== -1) {
+            const remainder = string.slice(index + headerEnd.length);
+
+            if (remainder) {
+              addData(this, remainder);
+            }
+
+            this._wroteHeader = true;
+          }
+        }
+
+        if (typeof cb === 'function') {
+          cb();
+        }
+      },
+    });
+
+    this.once('finish', () => {
+      this.emit('close')
+    });
+  }
+
+};
+
+
+/***/ }),
+
+/***/ 7056:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+const finish = __webpack_require__(8617);
+const getFramework = __webpack_require__(3455);
+const getProvider = __webpack_require__(4695);
+
+const defaultOptions = {
+  requestId: 'x-request-id'
+};
+
+module.exports = function (app, opts) {
+  const options = Object.assign({}, defaultOptions, opts);
+
+  const framework = getFramework(app);
+  const provider = getProvider(options);
+
+  return provider(async (request, ...context) => {
+    await finish(request, options.request, ...context);
+    const response = await framework(request);
+    await finish(response, options.response, ...context);
+    return response;
+  });
+};
+
+
+/***/ }),
+
 /***/ 6644:
 /***/ ((module) => {
 
@@ -32425,6 +33409,14 @@ module.exports = JSON.parse('["ac","com.ac","edu.ac","gov.ac","net.ac","mil.ac",
 
 /***/ }),
 
+/***/ 231:
+/***/ ((module) => {
+
+"use strict";
+module.exports = JSON.parse('{"i":["set-cookie","Set-cookie","sEt-cookie","SEt-cookie","seT-cookie","SeT-cookie","sET-cookie","SET-cookie","set-Cookie","Set-Cookie","sEt-Cookie","SEt-Cookie","seT-Cookie","SeT-Cookie","sET-Cookie","SET-Cookie","set-cOokie","Set-cOokie","sEt-cOokie","SEt-cOokie","seT-cOokie","SeT-cOokie","sET-cOokie","SET-cOokie","set-COokie","Set-COokie","sEt-COokie","SEt-COokie","seT-COokie","SeT-COokie","sET-COokie","SET-COokie","set-coOkie","Set-coOkie","sEt-coOkie","SEt-coOkie","seT-coOkie","SeT-coOkie","sET-coOkie","SET-coOkie","set-CoOkie","Set-CoOkie","sEt-CoOkie","SEt-CoOkie","seT-CoOkie","SeT-CoOkie","sET-CoOkie","SET-CoOkie","set-cOOkie","Set-cOOkie","sEt-cOOkie","SEt-cOOkie","seT-cOOkie","SeT-cOOkie","sET-cOOkie","SET-cOOkie","set-COOkie","Set-COOkie","sEt-COOkie","SEt-COOkie","seT-COOkie","SeT-COOkie","sET-COOkie","SET-COOkie","set-cooKie","Set-cooKie","sEt-cooKie","SEt-cooKie","seT-cooKie","SeT-cooKie","sET-cooKie","SET-cooKie","set-CooKie","Set-CooKie","sEt-CooKie","SEt-CooKie","seT-CooKie","SeT-CooKie","sET-CooKie","SET-CooKie","set-cOoKie","Set-cOoKie","sEt-cOoKie","SEt-cOoKie","seT-cOoKie","SeT-cOoKie","sET-cOoKie","SET-cOoKie","set-COoKie","Set-COoKie","sEt-COoKie","SEt-COoKie","seT-COoKie","SeT-COoKie","sET-COoKie","SET-COoKie","set-coOKie","Set-coOKie","sEt-coOKie","SEt-coOKie","seT-coOKie","SeT-coOKie","sET-coOKie","SET-coOKie","set-CoOKie","Set-CoOKie","sEt-CoOKie","SEt-CoOKie","seT-CoOKie","SeT-CoOKie","sET-CoOKie","SET-CoOKie","set-cOOKie","Set-cOOKie","sEt-cOOKie","SEt-cOOKie","seT-cOOKie","SeT-cOOKie","sET-cOOKie","SET-cOOKie","set-COOKie","Set-COOKie","sEt-COOKie","SEt-COOKie","seT-COOKie","SeT-COOKie","sET-COOKie","SET-COOKie","set-cookIe","Set-cookIe","sEt-cookIe","SEt-cookIe","seT-cookIe","SeT-cookIe","sET-cookIe","SET-cookIe","set-CookIe","Set-CookIe","sEt-CookIe","SEt-CookIe","seT-CookIe","SeT-CookIe","sET-CookIe","SET-CookIe","set-cOokIe","Set-cOokIe","sEt-cOokIe","SEt-cOokIe","seT-cOokIe","SeT-cOokIe","sET-cOokIe","SET-cOokIe","set-COokIe","Set-COokIe","sEt-COokIe","SEt-COokIe","seT-COokIe","SeT-COokIe","sET-COokIe","SET-COokIe","set-coOkIe","Set-coOkIe","sEt-coOkIe","SEt-coOkIe","seT-coOkIe","SeT-coOkIe","sET-coOkIe","SET-coOkIe","set-CoOkIe","Set-CoOkIe","sEt-CoOkIe","SEt-CoOkIe","seT-CoOkIe","SeT-CoOkIe","sET-CoOkIe","SET-CoOkIe","set-cOOkIe","Set-cOOkIe","sEt-cOOkIe","SEt-cOOkIe","seT-cOOkIe","SeT-cOOkIe","sET-cOOkIe","SET-cOOkIe","set-COOkIe","Set-COOkIe","sEt-COOkIe","SEt-COOkIe","seT-COOkIe","SeT-COOkIe","sET-COOkIe","SET-COOkIe","set-cooKIe","Set-cooKIe","sEt-cooKIe","SEt-cooKIe","seT-cooKIe","SeT-cooKIe","sET-cooKIe","SET-cooKIe","set-CooKIe","Set-CooKIe","sEt-CooKIe","SEt-CooKIe","seT-CooKIe","SeT-CooKIe","sET-CooKIe","SET-CooKIe","set-cOoKIe","Set-cOoKIe","sEt-cOoKIe","SEt-cOoKIe","seT-cOoKIe","SeT-cOoKIe","sET-cOoKIe","SET-cOoKIe","set-COoKIe","Set-COoKIe","sEt-COoKIe","SEt-COoKIe","seT-COoKIe","SeT-COoKIe","sET-COoKIe","SET-COoKIe","set-coOKIe","Set-coOKIe","sEt-coOKIe","SEt-coOKIe","seT-coOKIe","SeT-coOKIe","sET-coOKIe","SET-coOKIe","set-CoOKIe","Set-CoOKIe","sEt-CoOKIe","SEt-CoOKIe","seT-CoOKIe","SeT-CoOKIe","sET-CoOKIe","SET-CoOKIe","set-cOOKIe","Set-cOOKIe","sEt-cOOKIe","SEt-cOOKIe","seT-cOOKIe","SeT-cOOKIe","sET-cOOKIe","SET-cOOKIe","set-COOKIe","Set-COOKIe","sEt-COOKIe","SEt-COOKIe","seT-COOKIe","SeT-COOKIe","sET-COOKIe","SET-COOKIe","set-cookiE","Set-cookiE","sEt-cookiE","SEt-cookiE","seT-cookiE","SeT-cookiE","sET-cookiE","SET-cookiE","set-CookiE","Set-CookiE","sEt-CookiE","SEt-CookiE","seT-CookiE","SeT-CookiE","sET-CookiE","SET-CookiE","set-cOokiE","Set-cOokiE","sEt-cOokiE","SEt-cOokiE","seT-cOokiE","SeT-cOokiE","sET-cOokiE","SET-cOokiE","set-COokiE","Set-COokiE","sEt-COokiE","SEt-COokiE","seT-COokiE","SeT-COokiE","sET-COokiE","SET-COokiE","set-coOkiE","Set-coOkiE","sEt-coOkiE","SEt-coOkiE","seT-coOkiE","SeT-coOkiE","sET-coOkiE","SET-coOkiE","set-CoOkiE","Set-CoOkiE","sEt-CoOkiE","SEt-CoOkiE","seT-CoOkiE","SeT-CoOkiE","sET-CoOkiE","SET-CoOkiE","set-cOOkiE","Set-cOOkiE","sEt-cOOkiE","SEt-cOOkiE","seT-cOOkiE","SeT-cOOkiE","sET-cOOkiE","SET-cOOkiE","set-COOkiE","Set-COOkiE","sEt-COOkiE","SEt-COOkiE","seT-COOkiE","SeT-COOkiE","sET-COOkiE","SET-COOkiE","set-cooKiE","Set-cooKiE","sEt-cooKiE","SEt-cooKiE","seT-cooKiE","SeT-cooKiE","sET-cooKiE","SET-cooKiE","set-CooKiE","Set-CooKiE","sEt-CooKiE","SEt-CooKiE","seT-CooKiE","SeT-CooKiE","sET-CooKiE","SET-CooKiE","set-cOoKiE","Set-cOoKiE","sEt-cOoKiE","SEt-cOoKiE","seT-cOoKiE","SeT-cOoKiE","sET-cOoKiE","SET-cOoKiE","set-COoKiE","Set-COoKiE","sEt-COoKiE","SEt-COoKiE","seT-COoKiE","SeT-COoKiE","sET-COoKiE","SET-COoKiE","set-coOKiE","Set-coOKiE","sEt-coOKiE","SEt-coOKiE","seT-coOKiE","SeT-coOKiE","sET-coOKiE","SET-coOKiE","set-CoOKiE","Set-CoOKiE","sEt-CoOKiE","SEt-CoOKiE","seT-CoOKiE","SeT-CoOKiE","sET-CoOKiE","SET-CoOKiE","set-cOOKiE","Set-cOOKiE","sEt-cOOKiE","SEt-cOOKiE","seT-cOOKiE","SeT-cOOKiE","sET-cOOKiE","SET-cOOKiE","set-COOKiE","Set-COOKiE","sEt-COOKiE","SEt-COOKiE","seT-COOKiE","SeT-COOKiE","sET-COOKiE","SET-COOKiE","set-cookIE","Set-cookIE","sEt-cookIE","SEt-cookIE","seT-cookIE","SeT-cookIE","sET-cookIE","SET-cookIE","set-CookIE","Set-CookIE","sEt-CookIE","SEt-CookIE","seT-CookIE","SeT-CookIE","sET-CookIE","SET-CookIE","set-cOokIE","Set-cOokIE","sEt-cOokIE","SEt-cOokIE","seT-cOokIE","SeT-cOokIE","sET-cOokIE","SET-cOokIE","set-COokIE","Set-COokIE","sEt-COokIE","SEt-COokIE","seT-COokIE","SeT-COokIE","sET-COokIE","SET-COokIE","set-coOkIE","Set-coOkIE","sEt-coOkIE","SEt-coOkIE","seT-coOkIE","SeT-coOkIE","sET-coOkIE","SET-coOkIE","set-CoOkIE","Set-CoOkIE","sEt-CoOkIE","SEt-CoOkIE","seT-CoOkIE","SeT-CoOkIE","sET-CoOkIE","SET-CoOkIE","set-cOOkIE","Set-cOOkIE","sEt-cOOkIE","SEt-cOOkIE","seT-cOOkIE","SeT-cOOkIE","sET-cOOkIE","SET-cOOkIE","set-COOkIE","Set-COOkIE","sEt-COOkIE","SEt-COOkIE","seT-COOkIE","SeT-COOkIE","sET-COOkIE","SET-COOkIE","set-cooKIE","Set-cooKIE","sEt-cooKIE","SEt-cooKIE","seT-cooKIE","SeT-cooKIE","sET-cooKIE","SET-cooKIE","set-CooKIE","Set-CooKIE","sEt-CooKIE","SEt-CooKIE","seT-CooKIE","SeT-CooKIE","sET-CooKIE","SET-CooKIE","set-cOoKIE","Set-cOoKIE","sEt-cOoKIE","SEt-cOoKIE","seT-cOoKIE","SeT-cOoKIE","sET-cOoKIE","SET-cOoKIE","set-COoKIE","Set-COoKIE","sEt-COoKIE","SEt-COoKIE","seT-COoKIE","SeT-COoKIE","sET-COoKIE","SET-COoKIE","set-coOKIE","Set-coOKIE","sEt-coOKIE","SEt-coOKIE","seT-coOKIE","SeT-coOKIE","sET-coOKIE","SET-coOKIE","set-CoOKIE","Set-CoOKIE","sEt-CoOKIE","SEt-CoOKIE","seT-CoOKIE","SeT-CoOKIE","sET-CoOKIE","SET-CoOKIE","set-cOOKIE","Set-cOOKIE","sEt-cOOKIE","SEt-cOOKIE","seT-cOOKIE","SeT-cOOKIE","sET-cOOKIE","SET-cOOKIE","set-COOKIE","Set-COOKIE","sEt-COOKIE","SEt-COOKIE","seT-COOKIE","SeT-COOKIE","sET-COOKIE","SET-COOKIE"]}');
+
+/***/ }),
+
 /***/ 855:
 /***/ ((module) => {
 
@@ -32517,6 +33509,8 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be in strict mode.
 (() => {
 "use strict";
+
+// UNUSED EXPORTS: handler
 
 // EXTERNAL MODULE: ./node_modules/express/index.js
 var express = __webpack_require__(9268);
@@ -33035,34 +34029,43 @@ class Controller {
 }
 /* harmony default export */ const controller = (Controller);
 
+// EXTERNAL MODULE: ./node_modules/serverless-http/serverless-http.js
+var serverless_http = __webpack_require__(7056);
+var serverless_http_default = /*#__PURE__*/__webpack_require__.n(serverless_http);
 ;// CONCATENATED MODULE: ./src/server.ts
 
 
 
+
 const server_controller = new controller();
-const port = process.env.PORT || 5000;
+//const port = process.env.PORT || 5000
 const app = express_default()();
 app.enable('trust proxy');
 app.use(express_default().json());
 app.use(express_default().urlencoded({ extended: true }));
 app.use(lib_default()());
-app.post("/login", async (req, res) => {
+const router = (0,express.Router)();
+app.use('/api/', router);
+router.post("/login", async (req, res) => {
     const account = req.body.account;
     const password = req.body.password;
     await server_controller.tryLogin(req, res, account, password);
 });
-app.post("/challenge", async (req, res) => {
+router.post("/challenge", async (req, res) => {
     const account = req.body.account;
     const code = req.body.code;
     const endpoint = req.body.endpoint;
     await server_controller.tryChallenge(req, res, account, code, endpoint);
 });
-app.post("/logout", async (req, res) => {
+router.post("/logout", async (req, res) => {
     await server_controller.tryLogout(req, res);
 });
+/*
 app.listen(port, () => {
     console.log(`Start server on port ${port}.`);
 });
+*/
+const handler = serverless_http_default()(app);
 
 })();
 
