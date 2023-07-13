@@ -1,5 +1,5 @@
 [build]
-  echo Building Functions
+  command = "echo 'default context'"
 [functions]
   external_node_modules = ["express"]
   node_bundler = "esbuild"
