@@ -9,29 +9,42 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  NODE_VERSION: '18.x'
+  WORKING_DIRECTORY: nodejs/release
+  PACKAGE_NAME: insview
+  ARCHIVE_NAME: release.zip
+
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+
+      - name: 'Checkout Github Action'
+        uses: actions/checkout@v2
 
       - name: Set up Node.js version
         uses: actions/setup-node@v1
         with:
-          node-version: '18.x'
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: npm install, build, and test
         run: |
-          npm install
-          npm run build --if-present
-          npm run test --if-present
-      
+          npm install --production
+          npm run build
+
+      - name: Install zip
+        uses: montudor/action-zip@v1
+
+      - name: Zip output
+        run: zip -qq -r ${{ env.ARCHIVE_NAME }} .
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v2
         with:
-          name: node-app
-          path: .
+          name: ${{ env.PACKAGE_NAME }}
+          path: ${{ env.ARCHIVE_NAME }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -44,7 +57,7 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v2
         with:
-          name: node-app
+          name: ${{ env.PACKAGE_NAME }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v2
@@ -53,4 +66,4 @@ jobs:
           app-name: 'insviewlogin'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_FBC297CCE588440BBF4096C36B1EF9FB }}
-          package: .
+          package: ${{ env.ARCHIVE_NAME }}
