@@ -1,10 +1,11 @@
-import express, {Request, Response} from "express";
+import express, {Request, Response, Router} from "express";
 import cors from "cors";
 import Controller from "./controller"
+import serverless from 'serverless-http';
 
 const controller = new Controller()
 
-const port = process.env.PORT || 5000
+//const port = process.env.PORT || 5000
 
 const app = express();
 
@@ -13,7 +14,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
-app.post("/login", async (req:Request, res:Response) => {
+const router = Router();
+app.use('/api/', router);
+
+router.post("/login", async (req:Request, res:Response) => {
 
     const account = req.body.account;
     const password = req.body.password;
@@ -22,7 +26,7 @@ app.post("/login", async (req:Request, res:Response) => {
 
 })
 
-app.post("/challenge", async (req:Request, res:Response) => {
+router.post("/challenge", async (req:Request, res:Response) => {
 
     const account = req.body.account;
     const code = req.body.code;
@@ -32,12 +36,16 @@ app.post("/challenge", async (req:Request, res:Response) => {
 
 })
 
-app.post("/logout", async (req:Request, res:Response) => {
+router.post("/logout", async (req:Request, res:Response) => {
 
     await controller.tryLogout(req, res);
 
 })
 
+/*
 app.listen(port, () => {
     console.log(`Start server on port ${port}.`);
 });
+*/
+
+export const handler = serverless(app);
