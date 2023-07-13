@@ -1,3 +1,4 @@
+/*
 import express, {Request, Response, Router} from "express";
 import cors from "cors";
 import Controller from "./controller"
@@ -7,15 +8,15 @@ const controller = new Controller()
 
 //const port = process.env.PORT || 5000
 
-const api = express();
+const app = express();
 
-api.enable('trust proxy')
-api.use(express.json());
-api.use(express.urlencoded({ extended: true }));
-api.use(cors());
+app.enable('trust proxy')
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 
 const router = Router();
-api.use('/api/', router);
+app.use('/api/', router);
 
 router.post("/login", async (req:Request, res:Response) => {
 
@@ -42,10 +43,21 @@ router.post("/logout", async (req:Request, res:Response) => {
 
 })
 
-/*
-api.listen(port, () => {
+app.listen(port, () => {
     console.log(`Start server on port ${port}.`);
 });
+
+
+export const handler = serverless(app);
 */
+import express, { Router } from 'express';
+import serverless from 'serverless-http';
+
+const api = express();
+
+const router = Router();
+router.get('/hello', (req, res) => res.send('Hello World!'));
+
+api.use('/api/', router);
 
 export const handler = serverless(api);
