@@ -17,8 +17,8 @@ module.exports = {
         modules: ["node_modules"]
     },
     output: {
-        filename: "server.js",
-        path: path.resolve(__dirname)
+        filename: "api.js",
+        path: path.resolve(__dirname, "netlify", "functions")
     },
     optimization:{
         minimize: false

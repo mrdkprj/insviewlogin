@@ -13,8 +13,7 @@
   "scripts": {
     "start": "node server.js",
     "start:dev": "ts-node -r tsconfig-paths/register -r dotenv/config ./src/server.ts",
-    "build": "webpack --config webpack.config.server.js",
-    "build:s": "webpack --config webpack.config.server.js"
+    "build": "webpack --config webpack.config.server.js"
   },
   "browserslist": {
     "production": [
