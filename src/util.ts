@@ -3,6 +3,11 @@ import tough, { CookieJar } from "tough-cookie";
 
 const baseUrl = "https://www.instagram.com"
 
+const IgHeaderNames = {
+    appId:"x_app_id",
+    ajax:"x_ajax"
+}
+
 const Cookie = tough.Cookie;
 
 const baseRequestHeaders :AxiosRequestHeaders = {

@@ -32532,6 +32532,10 @@ var cookie = __webpack_require__(7857);
 ;// CONCATENATED MODULE: ./src/util.ts
 
 const baseUrl = "https://www.instagram.com";
+const IgHeaderNames = {
+    appId: "x_app_id",
+    ajax: "x_ajax"
+};
 const Cookie = cookie/* Cookie */.Vj;
 const baseRequestHeaders = {
     "Accept": "*/*",
