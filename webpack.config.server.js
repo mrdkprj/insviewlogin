@@ -2,7 +2,7 @@ const path = require("path");
 
 module.exports = {
     mode: "production",
-    entry: "./src/server.ts",
+    entry: "./src/api.ts",
     target: "node",
     module: {
         rules: [
