@@ -34039,13 +34039,13 @@ var serverless_http_default = /*#__PURE__*/__webpack_require__.n(serverless_http
 
 const server_controller = new controller();
 const port = process.env.PORT || 5000;
-const app = express_default()();
-app.enable('trust proxy');
-app.use(express_default().json());
-app.use(express_default().urlencoded({ extended: true }));
-app.use(lib_default()());
+const api = express_default()();
+api.enable('trust proxy');
+api.use(express_default().json());
+api.use(express_default().urlencoded({ extended: true }));
+api.use(lib_default()());
 const router = (0,express.Router)();
-app.use('/api/', router);
+api.use('/api/', router);
 router.post("/login", async (req, res) => {
     const account = req.body.account;
     const password = req.body.password;
@@ -34061,11 +34061,11 @@ router.post("/logout", async (req, res) => {
     await server_controller.tryLogout(req, res);
 });
 /*
-app.listen(port, () => {
+api.listen(port, () => {
     console.log(`Start server on port ${port}.`);
 });
 */
-const handler = serverless_http_default()(app);
+const handler = serverless_http_default()(api);
 
 })();
 
