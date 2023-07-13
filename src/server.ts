@@ -7,15 +7,15 @@ const controller = new Controller()
 
 //const port = process.env.PORT || 5000
 
-const app = express();
+const api = express();
 
-app.enable('trust proxy')
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+api.enable('trust proxy')
+api.use(express.json());
+api.use(express.urlencoded({ extended: true }));
+api.use(cors());
 
 const router = Router();
-app.use('/api/', router);
+api.use('/api/', router);
 
 router.post("/login", async (req:Request, res:Response) => {
 
@@ -43,9 +43,9 @@ router.post("/logout", async (req:Request, res:Response) => {
 })
 
 /*
-app.listen(port, () => {
+api.listen(port, () => {
     console.log(`Start server on port ${port}.`);
 });
 */
 
-export const handler = serverless(app);
+export const handler = serverless(api);
