@@ -2,7 +2,7 @@
   command = "echo 'default context'"
 [functions]
   external_node_modules = ["express"]
-  node_bundler = "webpack"
+  node_bundler = "esbuild"
 [[redirects]]
   force = true
   from = "/api/*"
