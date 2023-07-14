@@ -63,6 +63,9 @@ declare global {
     }
 
     class LoginError extends Error {
+
+        detail:ErrorDetail;
+
         constructor(detail:ErrorDetail) {
             super(detail.message)
             this.message = detail.message

@@ -42,6 +42,7 @@ class Controller{
     }
 
     sendErrorResponse(res:Response, ex:any){
+        const data = ex instanceof LoginError ? ex.detail : {message:ex.message}
         res.status(400).send({message:ex.message,data:{abc:1}})
     }
 
