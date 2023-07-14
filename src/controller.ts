@@ -54,9 +54,9 @@ class Controller{
     }
 
     async tryLogin(req:Request, res:any, account:string, password:string){
-console.log("here")
+
         if(!account || !password){
-            return this.sendErrorResponse(res, {message:"Username/password required"});
+            return this.sendErrorResponse(res, {message:"Username/password required" + process.env.NODE_ENV});
         }
 
         if(account !== process.env.ACCOUNT){
