@@ -63,10 +63,10 @@ declare global {
     }
 
     class LoginError extends Error {
-        constructor(message:string, detail?:any) {
-            super(message)
-            this.message = message
-            this.detail = detail ? detail : {}
+        constructor(detail:ErrorDetail) {
+            super(detail.message)
+            this.message = detail.message
+            this.detail = detail
             Object.setPrototypeOf(this, LoginError.prototype);
         }
     }

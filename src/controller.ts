@@ -48,11 +48,11 @@ class Controller{
     async tryLogin(req:Request, res:any, account:string, password:string){
 
         if(!account || !password){
-            return this.sendErrorResponse(res, {message:"Username/password required"});
+            return this.sendErrorResponse(res, new Error("Username/password required"));
         }
 
         if(account !== process.env.ACCOUNT){
-            return this.sendErrorResponse(res, {message:"Unauthorized account"});
+            return this.sendErrorResponse(res, new Error("Unauthorized account"))
         }
 
         try{

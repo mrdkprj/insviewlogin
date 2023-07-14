@@ -95,7 +95,7 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
 
         const error = logError(ex)
 
-        throw new LoginError("Login failed.", error)
+        throw new LoginError(error)
     }
 }
 
@@ -105,7 +105,7 @@ const tryRequestChallenge = async (account:string, ex:any, headers:AxiosRequestH
 
     if(ex.response.data.lock == true){
         const error = logError(ex)
-        throw new LoginError("Login activity locked.", error)
+        throw new LoginError(error)
     }
 
     return await requestChallenge(account, ex.response.data.checkpoint_url, headers, session, jar)
@@ -158,13 +158,13 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
             }
         }
 
-        throw new LoginError("Challenge response not found");
+        throw new LoginError({message:"Challenge response not found", data:{account:account, success:false, challenge: true, endpoint:url}, requireLogin:true});
 
     }catch(ex:any){
 
         const error = logError(ex)
 
-        throw new LoginError("Challenge request failed", error.message)
+        throw new LoginError(error)
 
     }
 
@@ -217,7 +217,7 @@ const challenge = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> =>
         const error = logError(ex);
         console.log(error.data)
 
-        throw new LoginError("Code verification failed", {account:req.data.account, success:false, challenge:true, endpoint:req.data.endpoint, message:error.message})
+        throw new LoginError({message:"Code verification failed", data:{account:req.data.account, success:false, challenge:true, endpoint:req.data.endpoint}, requireLogin:true})
     }
 
 }
