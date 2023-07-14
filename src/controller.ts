@@ -42,7 +42,7 @@ class Controller{
     }
 
     sendErrorResponse(res:Response, ex:any){
-        res.status(400).send(ex)
+        res.status(400).send({message:ex.message,data:{abc:1}})
     }
 
     async tryLogin(req:Request, res:any, account:string, password:string){
