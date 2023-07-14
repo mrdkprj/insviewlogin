@@ -88,14 +88,27 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
     }catch(ex:any){
 
         if(ex.response && ex.response.data.message && ex.response.data.message === "checkpoint_required"){
-            console.log(ex.response.data)
-            return await requestChallenge(account, ex.response.data.checkpoint_url, headers, session, jar)
+
+            return await tryRequestChallenge(account, ex.response.data.checkpoint_url, headers, session, jar)
+
         }
 
-        logError(ex)
+        const error = logError(ex)
 
-        throw new Error("Login failed")
+        throw new LoginError("Login failed.", error)
     }
+}
+
+const tryRequestChallenge = async (account:string, ex:any, headers:AxiosRequestHeaders, session:ISession, jar:CookieStore) :Promise<IgResponse<ILoginResponse>> => {
+
+    console.log(ex.response.data)
+
+    if(ex.response.data.lock = true){
+        const error = logError(ex)
+        throw new LoginError("Login activity locked.", error)
+    }
+
+    return await requestChallenge(account, ex.response.data.checkpoint_url, headers, session, jar)
 }
 
 const requestChallenge = async (account:string, checkpoint:string, headers:AxiosRequestHeaders, session:ISession, jar:CookieStore) :Promise<IgResponse<ILoginResponse>> => {
@@ -145,13 +158,13 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
             }
         }
 
-        throw new Error("Challenge request failed");
+        throw new LoginError("Challenge response not found");
 
     }catch(ex:any){
 
-        logError(ex)
+        const error = logError(ex)
 
-        throw new Error("Challenge request failed")
+        throw new LoginError("Challenge request failed", error.message)
 
     }
 
@@ -200,10 +213,11 @@ const challenge = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> =>
         }
 
     }catch(ex:any){
-        return {
-            data:{account:req.data.account, success:false, challenge:true, endpoint:req.data.endpoint},
-            session
-        }
+
+        const error = logError(ex);
+        console.log(error.data)
+
+        throw new LoginError("Code verification failed", {account:req.data.account, success:false, challenge:true, endpoint:req.data.endpoint, message:error.message})
     }
 
 }

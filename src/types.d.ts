@@ -1,57 +1,73 @@
 import { IncomingHttpHeaders } from "http";
 import { Cookie } from "tough-cookie";
 declare global {
-interface IResponse<T> {
-    status: boolean;
-    data: T;
-}
 
-interface IUser{
-    id:string;
-    igId:string;
-    isPro:boolean;
-    username:string;
-    name:string;
-    profileImage:string;
-    biography:string;
-    following:boolean;
-}
+    interface IResponse<T> {
+        status: boolean;
+        data: T;
+    }
 
-interface ILoginResponse {
-    account:string;
-    success:boolean;
-    challenge:boolean;
-    endpoint:string;
-}
+    interface IUser{
+        id:string;
+        igId:string;
+        isPro:boolean;
+        username:string;
+        name:string;
+        profileImage:string;
+        biography:string;
+        following:boolean;
+    }
 
-interface IgHeaders {
-    appId:string;
-    ajax:string;
-}
+    interface ILoginResponse {
+        account:string;
+        success:boolean;
+        challenge:boolean;
+        endpoint:string;
+        message?:string;
+    }
 
-const IgHeaderNames = {
-    appId:"x_app_id",
-    ajax:"x_ajax"
-}
+    interface IgHeaders {
+        appId:string;
+        ajax:string;
+    }
 
-interface IgRequest{
-    data:any;
-    headers:IncomingHttpHeaders;
-}
+    const IgHeaderNames = {
+        appId:"x_app_id",
+        ajax:"x_ajax"
+    }
 
-interface IgResponse<T>{
-    data:T;
-    session: ISession;
-}
+    interface IgRequest{
+        data:any;
+        headers:IncomingHttpHeaders;
+    }
 
-interface ISession {
-    isAuthenticated:boolean;
-    csrfToken:string;
-    userId:string;
-    cookies: Cookie[];
-    expires: Date | null;
-    xHeaders:IgHeaders;
-    userAgent?:string;
-}
+    interface IgResponse<T>{
+        data:T;
+        session: ISession;
+    }
 
+    interface ISession {
+        isAuthenticated:boolean;
+        csrfToken:string;
+        userId:string;
+        cookies: Cookie[];
+        expires: Date | null;
+        xHeaders:IgHeaders;
+        userAgent?:string;
+    }
+
+    type ErrorDetail = {
+        message:string;
+        data:any;
+        requireLogin:boolean;
+    }
+
+    class LoginError extends Error {
+        constructor(message:string, detail?:any) {
+            super(message)
+            this.message = message
+            this.detail = detail ? detail : {}
+            Object.setPrototypeOf(this, LoginError.prototype);
+        }
+    }
 }

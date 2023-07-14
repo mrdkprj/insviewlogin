@@ -324,20 +324,32 @@ class CookieStore{
 
 }
 
-const logError = (ex:any) => {
+const logError = (ex:any):ErrorDetail => {
 
+    const hasResponse = !!ex.response
     const errorData = ex.response ? ex.response.data : ex;
 
-    if(ex.response && !ex.response.headers["content-type"].includes("html")){
-        console.log(errorData)
+    let message = hasResponse ? ex.response.data.message : ex.message;
+    let data = hasResponse ? ex.response.data : "";
+
+    if(hasResponse && ex.response.headers["content-type"].includes("html")){
+        data = ""
     }
-    console.log(errorData.message)
+
+    console.log("----------- Error Logging ----------")
+    console.log(`message: ${errorData.message}`)
+    console.log(`data: ${errorData}`)
+    console.log("------------------------------------")
 
     if(ex.response && ex.response.data){
        return ex.response.data.require_login
     }
 
-    return false
+    return {
+        message,
+        data,
+        requireLogin: hasResponse ? ex.response.data.require_login : false
+    }
 }
 
 export {baseUrl, baseRequestHeaders, getSession, updateSession, createHeaders, getAppId, getClientVersion, getCookieString, extractToken, updateCookie, CookieStore, logError, extractUserId, extractCsrfToken}

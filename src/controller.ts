@@ -41,16 +41,8 @@ class Controller{
 
     }
 
-    sendErrorResponse(res:Response, ex:any, message = ""){
-
-        let errorMessage
-        if(message){
-            errorMessage = message;
-        }else{
-            errorMessage = ex.response ? ex.response.data.message : ex.message;
-        }
-
-        res.status(400).send({message:errorMessage})
+    sendErrorResponse(res:Response, ex:any){
+        res.status(400).send(ex)
     }
 
     async tryLogin(req:Request, res:any, account:string, password:string){
@@ -70,7 +62,7 @@ class Controller{
             await this.sendResponse(req, res, result.data, result.session);
 
         }catch(ex:any){
-            this.sendErrorResponse(res, ex, "Login failed");
+            this.sendErrorResponse(res, ex);
 
         }
     }
@@ -85,7 +77,7 @@ class Controller{
 
         }catch(ex:any){
 
-            this.sendErrorResponse(res, ex, "Challenge failed");
+            this.sendErrorResponse(res, ex);
 
         }
 
