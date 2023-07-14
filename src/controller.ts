@@ -50,13 +50,13 @@ class Controller{
             errorMessage = ex.response ? ex.response.data.message : ex.message;
         }
 
-        res.status(400).send(errorMessage)
+        res.status(400).send({message:errorMessage})
     }
 
     async tryLogin(req:Request, res:any, account:string, password:string){
 
         if(!account || !password){
-            return this.sendErrorResponse(res, {message:"Username/password required" + process.env.NODE_ENV});
+            return this.sendErrorResponse(res, {message:"Username/password required"});
         }
 
         if(account !== process.env.ACCOUNT){
