@@ -5,8 +5,6 @@ import serverless from 'serverless-http';
 
 const controller = new Controller()
 
-const port = process.env.PORT || 5000
-
 const api = express();
 
 api.enable('trust proxy')
@@ -41,10 +39,5 @@ router.post("/logout", async (req:Request, res:Response) => {
     await controller.tryLogout(req, res);
 
 })
-/*
-api.listen(port, () => {
-    console.log(`Start server on port ${port}.`);
-});
-*/
 
 export const handler = serverless(api);

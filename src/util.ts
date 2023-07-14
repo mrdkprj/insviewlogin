@@ -329,7 +329,7 @@ const logError = (ex:any):ErrorDetail => {
     const hasResponse = !!ex.response
     const errorData = ex.response ? ex.response.data : ex;
 
-    let message = hasResponse ? ex.response.data.message : ex.message;
+    const message = hasResponse ? ex.response.data.message : ex.message;
     let data = hasResponse ? ex.response.data : "";
 
     if(hasResponse && ex.response.headers["content-type"].includes("html")){
@@ -337,7 +337,7 @@ const logError = (ex:any):ErrorDetail => {
     }
 
     console.log("----------- Error Logging ----------")
-    console.log(`message: ${errorData.message}`)
+    console.log(`message: ${message}`)
     console.log(`data: ${errorData}`)
     console.log("------------------------------------")
 

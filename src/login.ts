@@ -103,7 +103,7 @@ const tryRequestChallenge = async (account:string, ex:any, headers:AxiosRequestH
 
     console.log(ex.response.data)
 
-    if(ex.response.data.lock = true){
+    if(ex.response.data.lock == true){
         const error = logError(ex)
         throw new LoginError("Login activity locked.", error)
     }
