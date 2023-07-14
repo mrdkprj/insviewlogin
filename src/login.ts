@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import { baseUrl, createHeaders, getAppId, getClientVersion, getSession, CookieStore, updateSession, logError, extractCsrfToken } from "./util";
+import { LoginError } from "entity";
 
 const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
 

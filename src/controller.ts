@@ -1,6 +1,7 @@
 import {Request, Response} from "express";
 import type { Cookie } from "tough-cookie";
 import {login, challenge, logout} from "./login"
+import { LoginError } from "entity";
 
 class Controller{
 
@@ -43,7 +44,7 @@ class Controller{
 
     sendErrorResponse(res:Response, ex:any){
         const data = ex instanceof LoginError ? ex.detail : {message:ex.message}
-        res.status(400).send({message:ex.message,data:{abc:1}})
+        res.status(400).send(data)
     }
 
     async tryLogin(req:Request, res:any, account:string, password:string){
