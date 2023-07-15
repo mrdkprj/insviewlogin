@@ -90,7 +90,10 @@ console.log(headers)
 
         if(ex.response && ex.response.data.message && ex.response.data.message === "checkpoint_required"){
 
-            return await tryRequestChallenge(account, ex, headers, session, jar)
+            console.log("------------- checkpoint required ------------")
+            console.log(ex.response.data)
+
+            return await requestChallenge(account, ex.response.data.checkpoint_url, headers, session, jar)
 
         }
 
@@ -98,19 +101,6 @@ console.log(headers)
 
         throw new LoginError(error)
     }
-}
-
-const tryRequestChallenge = async (account:string, ex:any, headers:AxiosRequestHeaders, session:ISession, jar:CookieStore) :Promise<IgResponse<ILoginResponse>> => {
-
-    console.log("------------- checkpoint required ------------")
-    console.log(ex.response.data)
-
-    if(ex.response.data.lock == true){
-        const error = logError(ex)
-        throw new LoginError(error)
-    }
-
-    return await requestChallenge(account, ex.response.data.checkpoint_url, headers, session, jar)
 }
 
 const requestChallenge = async (account:string, checkpoint:string, headers:AxiosRequestHeaders, session:ISession, jar:CookieStore) :Promise<IgResponse<ILoginResponse>> => {
