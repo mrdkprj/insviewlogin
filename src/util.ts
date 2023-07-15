@@ -344,7 +344,7 @@ const logError = (ex:any):ErrorDetail => {
     if(ex.response && ex.response.data){
        return ex.response.data.require_login
     }
-
+console.log(ex.cause)
     data.cause = ex.cause;
 
     return {
