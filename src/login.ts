@@ -16,8 +16,6 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
 
     try{
 
-        var y;
-        console.log(y.data.tat);
         const options :AxiosRequestConfig= {};
 
         headers.Cookie = "ig_cb=1;"
@@ -104,6 +102,7 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
 
 const tryRequestChallenge = async (account:string, ex:any, headers:AxiosRequestHeaders, session:ISession, jar:CookieStore) :Promise<IgResponse<ILoginResponse>> => {
 
+    console.log("------------- checkpoint required ------------")
     console.log(ex.response.data)
 
     if(ex.response.data.lock == true){
