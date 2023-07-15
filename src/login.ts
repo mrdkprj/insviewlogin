@@ -70,7 +70,7 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
         options.method = "POST"
         options.data = params;
         options.headers = headers;
-
+console.log(headers)
         response = await axios.request(options);
 
         console.log("----------auth response-------")
