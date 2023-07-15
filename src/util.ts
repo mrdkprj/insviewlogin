@@ -348,6 +348,7 @@ const logError = (ex:any):ErrorDetail => {
     return {
         message,
         data,
+        cause:ex.cause,
         requireLogin: hasResponse ? ex.response.data.require_login : false
     }
 }
