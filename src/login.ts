@@ -90,7 +90,7 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
 
         if(ex.response && ex.response.data.message && ex.response.data.message === "checkpoint_required"){
 
-            return await tryRequestChallenge(account, ex.response.data.checkpoint_url, headers, session, jar)
+            return await tryRequestChallenge(account, ex, headers, session, jar)
 
         }
 
