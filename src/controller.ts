@@ -43,7 +43,7 @@ class Controller{
     }
 
     sendErrorResponse(res:Response, ex:any){
-        const data = "detail" in ex ? ex.detail : {message:ex.message}
+        const data = ex instanceof LoginError ? ex.detail : {message:ex.message}
         res.status(400).send(data)
     }
 
@@ -54,8 +54,7 @@ class Controller{
         }
 
         if(account !== process.env.ACCOUNT){
-            //return this.sendErrorResponse(res, new Error("Unauthorized account"))
-            return this.sendErrorResponse(res, new LoginError({message:"Unauthorized account", data:{}, requireLogin:true}))
+            return this.sendErrorResponse(res, new Error("Unauthorized account"))
         }
 
         try{

@@ -327,7 +327,7 @@ class CookieStore{
 const logError = (ex:any):ErrorDetail => {
 
     const hasResponse = !!ex.response
-    const errorData = ex.response ? ex.response.data : ex;
+    const errorData = hasResponse ? ex.response.data : ex;
 
     const message = hasResponse ? ex.response.data.message : ex.message;
     let data = hasResponse ? ex.response.data : "";
@@ -340,10 +340,6 @@ const logError = (ex:any):ErrorDetail => {
     console.log(`message: ${message}`)
     console.log(`data: ${JSON.stringify(errorData)}`)
     console.log("------------------------------------")
-
-    if(ex.response && ex.response.data){
-       return ex.response.data.require_login
-    }
 
     return {
         message,
