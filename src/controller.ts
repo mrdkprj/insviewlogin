@@ -54,7 +54,8 @@ class Controller{
         }
 
         if(account !== process.env.ACCOUNT){
-            return this.sendErrorResponse(res, new Error("Unauthorized account"))
+            //return this.sendErrorResponse(res, new Error("Unauthorized account"))
+            return this.sendErrorResponse(res, new LoginError({message:"Unauthorized account", data:{}, requireLogin:true}))
         }
 
         try{
