@@ -23,7 +23,6 @@ declare global {
         success:boolean;
         challenge:boolean;
         endpoint:string;
-        message?:string;
     }
 
     interface IgHeaders {
@@ -59,6 +58,7 @@ declare global {
     type ErrorDetail = {
         message:string;
         data:any;
+        cause?:any;
         requireLogin:boolean;
     }
 

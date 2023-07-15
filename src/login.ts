@@ -16,6 +16,8 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
 
     try{
 
+        var y;
+        console.log(y.data.tat);
         const options :AxiosRequestConfig= {};
 
         headers.Cookie = "ig_cb=1;"
