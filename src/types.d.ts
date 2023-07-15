@@ -58,7 +58,6 @@ declare global {
     type ErrorDetail = {
         message:string;
         data:any;
-        cause?:any;
         requireLogin:boolean;
     }
 
