@@ -66,7 +66,7 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
         params.append("optIntoOneTap", "false")
         params.append("trustedDeviceRecords", "{}")
 
-        options.url = "https://insview.azurewebsites.net/test"//"https://www.instagram.com/api/v1/web/accounts/login/ajax/"
+        options.url = "https://www.instagram.com/api/v1/web/accounts/login/ajax/"
         options.method = "POST"
         options.data = params;
         options.headers = headers;
