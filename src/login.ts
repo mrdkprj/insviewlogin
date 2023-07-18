@@ -160,7 +160,11 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
         response = await axios.request(options);
 
 
-        throw new LoginError({message:"Challenge response not found", data:response.data, requireLogin:true});
+        //throw new LoginError({message:"Challenge response not found", data:response.data, requireLogin:true});
+        return {
+            data:{account:response.data, success:false, challenge: true, endpoint:url},
+            session
+        }
 
     }catch(ex:any){
 
