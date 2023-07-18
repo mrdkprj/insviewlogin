@@ -150,8 +150,6 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
             }
         }
 
-        cookies = await jar.storeCookie(response.headers["set-cookie"])
-        session = updateSession(session, cookies)
         headers["x-csrftoken"] = session.csrfToken;
         headers.Cookie = await jar.getCookieStrings();
         options.data = null;
