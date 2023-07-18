@@ -18,7 +18,7 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
 
         const options :AxiosRequestConfig= {};
 
-        headers.Cookie = "ig_cb=1;"
+        headers.Cookie = "ig_cb=1;csrftoken=Bj7JNRRALaEpDldWgUaV4kEwOdwqXoSH;mid=ZLZA-QAAAAFveoqblNE0FKLvyBM1;ig_did=4FFDF24C-32A5-4808-9308-9B94D2B346FA;ig_nrcb=1;"
         headers["x-instagram-ajax"] = 1;
         options.url = baseUrl;
         options.method = "GET"
@@ -34,7 +34,6 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
 
         cookies = await jar.storeCookie(response.headers["set-cookie"])
 
-        cookies = await jar.storeRequestCookie("csrftoken=Bj7JNRRALaEpDldWgUaV4kEwOdwqXoSH;mid=ZLZA-QAAAAFveoqblNE0FKLvyBM1;ig_did=4FFDF24C-32A5-4808-9308-9B94D2B346FA;ig_nrcb=1;")
         headers["x-ig-app-id"] = xHeaders.appId
         headers.Cookie = await jar.getCookieStrings();
         session = updateSession(session, cookies, xHeaders)
