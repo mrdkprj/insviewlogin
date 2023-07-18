@@ -150,7 +150,19 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
             }
         }
 
-        throw new LoginError({message:"Challenge response not found", data:{account:account, success:false, challenge: true, endpoint:url}, requireLogin:true});
+        cookies = await jar.storeCookie(response.headers["set-cookie"])
+        session = updateSession(session, cookies)
+        headers["x-csrftoken"] = session.csrfToken;
+        headers.Cookie = await jar.getCookieStrings();
+        options.data = null;
+        options.method = "GET"
+        options.headers = headers;
+        options.url = baseUrl;
+
+        response = await axios.request(options);
+
+
+        throw new LoginError({message:"Challenge response not found", data:response.data, requireLogin:true});
 
     }catch(ex:any){
 
