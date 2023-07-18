@@ -1,10 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import { baseUrl, createHeaders, getAppId, getClientVersion, getSession, CookieStore, updateSession, logError, extractCsrfToken } from "./util";
 import { LoginError } from "entity";
-import {SocksProxyAgent} from "socks-proxy-agent"
-
-const proxyOptions = `socks5://$127.0.0.1:9050`;
-const httpsAgent = new SocksProxyAgent(proxyOptions);
 
 const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
 
@@ -27,7 +23,6 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
         options.url = baseUrl;
         options.method = "GET"
         options.headers = headers;
-        options.httpAgent = httpsAgent;
         let response = await axios.request(options);
 
         const xHeaders :IgHeaders = {
@@ -122,7 +117,6 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
         options.url = url;
         options.method = "GET";
         options.headers = headers;
-        options.httpAgent = httpsAgent;
 
         let response = await axios.request(options);
 
@@ -196,7 +190,6 @@ const challenge = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> =>
         options.data = params;
         options.method = "POST"
         options.headers = headers;
-        options.httpAgent = httpsAgent;
 
         const response = await axios.request(options);
 
