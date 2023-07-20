@@ -92,8 +92,10 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
         if(ex.response && ex.response.data.message && ex.response.data.message === "checkpoint_required"){
 
             console.log("------------- checkpoint required ------------")
-            console.log(ex.response.headers)
             console.log(ex.response.data)
+            cookies = await jar.storeCookie(ex.response.headers["set-cookie"]);
+            session = updateSession(session, cookies);
+            headers.Cookie = await jar.getCookieStrings()
 
             return await requestChallenge(account, ex.response.data.checkpoint_url, headers, session, jar)
 
