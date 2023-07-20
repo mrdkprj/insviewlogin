@@ -50,6 +50,7 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
         headers.Cookie = await jar.getCookieStrings()
 */
 
+        headers["X-Asbd-Id"] = 129477;
         headers["x-ig-www-claim"] = 0
         headers["x-instagram-ajax"] = xHeaders.ajax
         headers["x-csrftoken"] = session.csrfToken;
@@ -70,7 +71,7 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
         options.method = "POST"
         options.data = params;
         options.headers = headers;
-console.log(headers)
+
         response = await axios.request(options);
 
         console.log("----------auth response-------")
@@ -133,6 +134,8 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
         options.data = params;
         options.method = "POST"
         options.headers = headers;
+        console.log(url)
+        console.log(headers)
 
         response = await axios.request(options);
 
