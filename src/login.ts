@@ -119,13 +119,7 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
         options.headers = headers;
 
         let response = await axios.request(options);
-        const x = 10;
-        if(x > 0){
-         return {
-             data:{account:response.data, success:false, challenge: true, endpoint:url},
-             session
-         }
-        }
+
         let cookies = await jar.storeCookie(response.headers["set-cookie"])
         session = updateSession(session, cookies)
 
@@ -133,7 +127,7 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
         headers["x-csrftoken"] = session.csrfToken;
 
         const params = new URLSearchParams();
-        params.append("choice", "1")
+        params.append("choice", "0")
 
         options.data = params;
         options.method = "POST"
