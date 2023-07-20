@@ -95,6 +95,7 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
             console.log(ex.response.data)
             cookies = await jar.storeCookie(ex.response.headers["set-cookie"]);
             session = updateSession(session, cookies);
+            headers["x-csrftoken"] = session.csrfToken;
             headers.Cookie = await jar.getCookieStrings()
 
             return await requestChallenge(account, ex.response.data.checkpoint_url, headers, session, jar)
@@ -118,7 +119,7 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
 
         const url = "https://www.instagram.com" + new URL(checkpoint).pathname.replace("/challenge/","/challenge/action/");
 
-        options.url = url;
+        options.url = checkpoint;
         options.method = "GET";
         options.headers = headers;
 
@@ -126,8 +127,6 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
 
         let cookies = await jar.storeCookie(response.headers["set-cookie"])
         session = updateSession(session, cookies)
-
-
 
         headers["referer"] = url
         headers["x-csrftoken"] = session.csrfToken;
