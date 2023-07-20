@@ -116,7 +116,9 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
 
         const options :AxiosRequestConfig= {};
 
-        options.url = checkpoint;
+        const url = "https://www.instagram.com" + new URL(checkpoint).pathname.replace("/challenge/","/challenge/action/");
+
+        options.url = url;
         options.method = "GET";
         options.headers = headers;
 
@@ -125,9 +127,9 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
         let cookies = await jar.storeCookie(response.headers["set-cookie"])
         session = updateSession(session, cookies)
 
-        const url = "https://www.instagram.com" + new URL(checkpoint).pathname.replace("/challenge/","/challenge/action/");
 
-        headers["referer"] = checkpoint
+
+        headers["referer"] = url
         headers["x-csrftoken"] = session.csrfToken;
         headers.Cookie = await jar.getCookieStrings();
 
