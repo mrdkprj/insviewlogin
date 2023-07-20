@@ -112,9 +112,7 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
 
         const options :AxiosRequestConfig= {};
 
-        const url = checkpoint;
-
-        options.url = url;
+        options.url = checkpoint;
         options.method = "GET";
         options.headers = headers;
 
@@ -123,11 +121,14 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
         let cookies = await jar.storeCookie(response.headers["set-cookie"])
         session = updateSession(session, cookies)
 
+        const url = "https://www.instagram.com" + new URL(checkpoint).pathname.replace("/challenge/","/challenge/action/");
+
         headers["referer"] = url
         headers["x-csrftoken"] = session.csrfToken;
+        headers.Cookie = await jar.getCookieStrings();
 
         const params = new URLSearchParams();
-        params.append("choice", "0")
+        params.append("choice", "1")
 
         options.data = params;
         options.method = "POST"
@@ -150,11 +151,7 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
             }
         }
 
-        throw new LoginError({message:"Challenge response not found", data:response.data, requireLogin:true});
-        // return {
-        //     data:{account:response.data, success:false, challenge: true, endpoint:url},
-        //     session
-        // }
+        throw new LoginError({message:"Challenge response not found", data:"", requireLogin:true});
 
     }catch(ex:any){
 
