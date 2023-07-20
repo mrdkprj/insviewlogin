@@ -92,6 +92,7 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
         if(ex.response && ex.response.data.message && ex.response.data.message === "checkpoint_required"){
 
             console.log("------------- checkpoint required ------------")
+            console.log(ex.response.headers)
             console.log(ex.response.data)
 
             return await requestChallenge(account, ex.response.data.checkpoint_url, headers, session, jar)
@@ -153,21 +154,6 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
                 session
             }
         }
-
-        headers["x-csrftoken"] = session.csrfToken;
-        headers.Cookie = await jar.getCookieStrings();
-        options.headers = headers;
-        response = await axios.request(options);
-
-        if(response.data.type && response.data.type === "CHALLENGE"){
-
-            return {
-                data:{account:account, success:false, challenge: true, endpoint:url},
-                session
-            }
-        }
-
-        console.log(response.data)
 
         throw new LoginError({message:"Challenge response not found", data:"", requireLogin:true});
 
