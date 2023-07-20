@@ -127,7 +127,7 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
 
         const url = "https://www.instagram.com" + new URL(checkpoint).pathname.replace("/challenge/","/challenge/action/");
 
-        headers["referer"] = url
+        headers["referer"] = checkpoint
         headers["x-csrftoken"] = session.csrfToken;
         headers.Cookie = await jar.getCookieStrings();
 
