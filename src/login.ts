@@ -124,7 +124,7 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
         options.headers = headers;
 
         let response = await axios.request(options);
-
+console.log(response.status)
         let cookies = await jar.storeCookie(response.headers["set-cookie"])
         session = updateSession(session, cookies)
 
