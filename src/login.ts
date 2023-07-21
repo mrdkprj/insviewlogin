@@ -9,7 +9,7 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
     const account = req.data.account;
 
     let session = getSession({});
-    session.userAgent = req.headers["user-agent"];
+    session.userAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1"//req.headers["user-agent"];
     const headers = createHeaders(baseUrl, session);
     let cookies = [];
     const jar = new CookieStore();
