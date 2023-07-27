@@ -53,13 +53,6 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
         session = updateSession(session, cookies, xHeaders)
         headers.Cookie = await jar.getCookieStrings()
 
-        const x = 10;
-        if(x > 0){
-            return {
-                data:{account, success:session.isAuthenticated, challenge:false, endpoint:""},
-                session
-            }
-        }
 //----
 
         headers["X-Asbd-Id"] = 129477;
@@ -220,7 +213,9 @@ const challenge = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> =>
         session = updateSession(session, cookies);
         const data = {account:req.data.account, success:session.isAuthenticated, challenge:!session.isAuthenticated, endpoint:""};
 
-        console.log(response.data)
+        if(!response.headers["content-type"].includes("html")){
+            console.log(response.data)
+        }
 
         return {
             data,
