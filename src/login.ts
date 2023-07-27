@@ -39,12 +39,16 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
         session = updateSession(session, cookies, xHeaders)
 
 //-----
+        headers["X-Asbd-Id"] = 129477;
+        headers["X-Ig-Www-Claim"] = 0
+        headers["X-Instagram-Ajax"] = xHeaders.ajax
+        headers["X-Csrftoken"] = session.csrfToken;
         options.url = "https://www.instagram.com/api/v1/public/landing_info/";
         options.method = "GET"
         options.headers = headers;
-
+console.log(headers)
         response = await axios.request(options);
-
+        console.log(response.headers["set-cookie"])
         cookies = await jar.storeCookie(response.headers["set-cookie"]);
         session = updateSession(session, cookies, xHeaders)
         headers.Cookie = await jar.getCookieStrings()
