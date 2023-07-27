@@ -19,7 +19,7 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
         const options :AxiosRequestConfig= {};
 
         headers.Cookie = "ig_cb=1"
-        headers["x-instagram-ajax"] = 1;
+        headers["X-Instagram-Ajax"] = 1;
         options.url = baseUrl;
         options.method = "GET"
         options.headers = headers;
@@ -34,11 +34,11 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
 
         cookies = await jar.storeCookie(response.headers["set-cookie"])
 
-        headers["x-ig-app-id"] = xHeaders.appId
+        headers["X-Ig-App-Id"] = xHeaders.appId
         headers.Cookie = await jar.getCookieStrings();
         session = updateSession(session, cookies, xHeaders)
 
-/*
+//-----
         options.url = "https://www.instagram.com/api/v1/public/landing_info/";
         options.method = "GET"
         options.headers = headers;
@@ -48,12 +48,12 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
         cookies = await jar.storeCookie(response.headers["set-cookie"]);
         session = updateSession(session, cookies, xHeaders)
         headers.Cookie = await jar.getCookieStrings()
-*/
+//----
 
         headers["X-Asbd-Id"] = 129477;
-        headers["x-ig-www-claim"] = 0
-        headers["x-instagram-ajax"] = xHeaders.ajax
-        headers["x-csrftoken"] = session.csrfToken;
+        headers["X-Ig-Www-Claim"] = 0
+        headers["X-Instagram-Ajax"] = xHeaders.ajax
+        headers["X-Csrftoken"] = session.csrfToken;
         headers["content-type"] = "application/x-www-form-urlencoded"
 
         const createEncPassword = (pwd:string) => {
@@ -95,7 +95,7 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
             console.log(ex.response.data)
             cookies = await jar.storeCookie(ex.response.headers["set-cookie"]);
             session = updateSession(session, cookies);
-            headers["x-csrftoken"] = session.csrfToken;
+            headers["X-Csrftoken"] = session.csrfToken;
             headers.Cookie = await jar.getCookieStrings()
 
             return await requestChallenge(account, ex.response.data.checkpoint_url, headers, session, jar)
@@ -129,7 +129,7 @@ console.log(response.status)
         session = updateSession(session, cookies)
 
         headers["referer"] = url
-        headers["x-csrftoken"] = session.csrfToken;
+        headers["X-Csrftoken"] = session.csrfToken;
         headers.Cookie = await jar.getCookieStrings();
 
         const params = new URLSearchParams();
@@ -158,7 +158,10 @@ console.log(response.status)
             }
         }
 
-        throw new LoginError({message:"Challenge response not found", data:"", requireLogin:true});
+        return {
+            data:{account:response.data, success:false, challenge: true, endpoint:url},
+            session
+        }
 
     }catch(ex:any){
 
@@ -183,9 +186,9 @@ const challenge = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> =>
 
     try{
 
-        headers["x-ig-app-id"] = session.xHeaders.appId
-        headers["x-ig-www-claim"] = 0
-        headers["x-instagram-ajax"] = session.xHeaders.ajax
+        headers["X-Ig-App-Id"] = session.xHeaders.appId
+        headers["X-Ig-Www-Claim"] = 0
+        headers["X-Instagram-Ajax"] = session.xHeaders.ajax
         headers["content-type"] = "application/x-www-form-urlencoded"
 
         await jar.storeRequestCookie(req.headers.cookie)
@@ -235,9 +238,9 @@ const logout = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>>  => {
         const url = "https://www.instagram.com/api/v1/web/accounts/logout/ajax/";
 
         const headers = createHeaders(baseUrl, session);
-        headers["x-ig-app-id"] = session.xHeaders.appId
-        headers["x-ig-www-claim"] = 0
-        headers["x-instagram-ajax"] = session.xHeaders.ajax
+        headers["X-Ig-App-Id"] = session.xHeaders.appId
+        headers["X-Ig-Www-Claim"] = 0
+        headers["X-Instagram-Ajax"] = session.xHeaders.ajax
         headers["content-type"] = "application/x-www-form-urlencoded"
 
         await jar.storeRequestCookie(req.headers.cookie)
