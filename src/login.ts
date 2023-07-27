@@ -183,7 +183,7 @@ const challenge = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> =>
     console.log("-------------- code verification start ---------")
 
     const url = req.data.endpoint;
-
+console.log(req.headers)
     const jar = new CookieStore();
     const options :AxiosRequestConfig = {}
     let session = getSession(req.headers);
