@@ -46,9 +46,9 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
         options.url = "https://www.instagram.com/api/v1/public/landing_info/";
         options.method = "GET"
         options.headers = headers;
-console.log(headers)
+
         response = await axios.request(options);
-        console.log(response.headers["set-cookie"])
+
         cookies = await jar.storeCookie(response.headers["set-cookie"]);
         session = updateSession(session, cookies, xHeaders)
         headers.Cookie = await jar.getCookieStrings()
@@ -75,7 +75,7 @@ console.log(headers)
         options.method = "POST"
         options.data = params;
         options.headers = headers;
-
+console.log(headers)
         response = await axios.request(options);
 
         console.log("----------auth response-------")

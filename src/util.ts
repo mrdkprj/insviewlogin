@@ -170,7 +170,7 @@ const createHeaders = (referer:string, session:ISession) :AxiosRequestHeaders =>
     headers["origin"] = "https://www.instagram.com"
     headers["referer"] = referer
     headers["x-requested-with"] = "XMLHttpRequest"
-    headers["x-csrftoken"] = session.csrfToken;
+    headers["X-Csrftoken"] = session.csrfToken;
     if(session.userAgent){
         headers["user-agent"] = session.userAgent
     }
