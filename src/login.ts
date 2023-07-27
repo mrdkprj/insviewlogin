@@ -53,13 +53,6 @@ const login = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> => {
         session = updateSession(session, cookies, xHeaders)
         headers.Cookie = await jar.getCookieStrings()
 
-        const x = 10;
-        if(x > 0){
-            return {
-                data:{account, success:session.isAuthenticated, challenge:false, endpoint:""},
-                session
-            }
-        }
 //----
 
         headers["X-Asbd-Id"] = 129477;
