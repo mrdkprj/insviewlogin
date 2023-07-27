@@ -197,7 +197,7 @@ const challenge = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> =>
 
         await jar.storeRequestCookie(req.headers.cookie)
         headers.Cookie = await jar.getCookieStrings()
-
+        console.log(headers)
         const params = new URLSearchParams();
         params.append("security_code", req.data.code)
 
