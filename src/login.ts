@@ -163,10 +163,7 @@ console.log(response.headers)
             }
         }
 
-        return {
-            data:{account:response.data, success:false, challenge: true, endpoint:url},
-            session
-        }
+        throw new Error("Challange response not found")
 
     }catch(ex:any){
 
