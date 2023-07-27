@@ -115,7 +115,7 @@ console.log(headers)
 const requestChallenge = async (account:string, checkpoint:string, headers:AxiosRequestHeaders, session:ISession, jar:CookieStore) :Promise<IgResponse<ILoginResponse>> => {
 
 
-    console.log("---------- challenge start -------")
+    console.log("---------- checkpoint start -------")
 
     try{
 
@@ -128,7 +128,7 @@ const requestChallenge = async (account:string, checkpoint:string, headers:Axios
         options.headers = headers;
 
         let response = await axios.request(options);
-console.log(response.status)
+console.log(response.headers)
         let cookies = await jar.storeCookie(response.headers["set-cookie"])
         session = updateSession(session, cookies)
 
