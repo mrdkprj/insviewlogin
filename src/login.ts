@@ -210,6 +210,7 @@ const challenge = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> =>
         session = updateSession(session, cookies);
         const data = {account:req.data.account, success:session.isAuthenticated, challenge:!session.isAuthenticated, endpoint:""};
 
+        console.log(cookies)
         if(!response.headers["content-type"].includes("html")){
             console.log(response.data)
         }
