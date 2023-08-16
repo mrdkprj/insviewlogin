@@ -171,6 +171,7 @@ const createHeaders = (referer:string, session:ISession) :AxiosRequestHeaders =>
     headers["referer"] = referer
     headers["x-requested-with"] = "XMLHttpRequest"
     headers["X-Csrftoken"] = session.csrfToken;
+    headers["X-Asbd-Id"] = 129477
     if(session.userAgent){
         headers["user-agent"] = session.userAgent
     }
