@@ -195,7 +195,7 @@ const challenge = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> =>
 
         await jar.storeRequestCookie(req.headers.cookie)
         headers.Cookie = await jar.getCookieStrings()
-        console.log(headers)
+
         const params = new URLSearchParams();
         params.append("security_code", req.data.code)
 
@@ -211,6 +211,7 @@ const challenge = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> =>
         const data = {account:req.data.account, success:session.isAuthenticated, challenge:!session.isAuthenticated, endpoint:""};
 
         console.log(cookies)
+        console.log(session.cookies)
         if(!response.headers["content-type"].includes("html")){
             console.log(response.data)
         }
