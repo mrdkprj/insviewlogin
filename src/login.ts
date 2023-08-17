@@ -140,6 +140,7 @@ console.log(response.status)
         const params = new URLSearchParams();
         params.append("choice", "1")
 
+        options.url = url;
         options.data = params;
         options.method = "POST"
         options.headers = headers;
