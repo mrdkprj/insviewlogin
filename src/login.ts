@@ -208,7 +208,7 @@ const challenge = async (req:IgRequest) : Promise<IgResponse<ILoginResponse>> =>
         const response = await axios.request(options);
 
         const cookies = await jar.storeCookie(response.headers["set-cookie"])
-        console.log(cookies)
+        console.log(response.headers["set-cookie"])
 
         session = updateSession(session, cookies);
         const data = {account:req.data.account, success:session.isAuthenticated, challenge:!session.isAuthenticated, endpoint:""};
